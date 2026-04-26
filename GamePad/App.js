@@ -4,15 +4,17 @@ import { StatusBar } from 'expo-status-bar';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useKeepAwake } from 'expo-keep-awake';
 import { Feather } from '@expo/vector-icons';
+// IMPORTANTE: Ahora usamos el mismo "idioma" que la PC
+import { io } from 'socket.io-client'; 
 
 export default function App() {
   useKeepAwake();
 
-  const [direccionIp, setDireccionIp] = useState('192.168.'); 
+  const [direccionIp, setDireccionIp] = useState('192.168.1.39'); // Ya te dejé tu IP por defecto!
   const [estaConectado, setEstaConectado] = useState(false);
   const [estadoDeConexion, setEstadoDeConexion] = useState('Desconectado');
   
-  const webSocketRef = useRef(null);
+  const socketRef = useRef(null);
 
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
@@ -25,42 +27,44 @@ export default function App() {
     if (!direccionIp) return;
     setEstadoDeConexion('Conectando...');
     
-    const urlWebSocket = `ws://${direccionIp}:3000`;
-    webSocketRef.current = new WebSocket(urlWebSocket);
+    // Conexión usando socket.io-client
+    const urlSocket = `http://${direccionIp}:3000`;
+    socketRef.current = io(urlSocket, {
+      transports: ['websocket'] // Fuerza la mejor conexión
+    });
 
-    webSocketRef.current.onopen = () => {
+    socketRef.current.on('connect', () => {
       setEstaConectado(true);
       setEstadoDeConexion('Conectado');
-    };
+    });
 
-    webSocketRef.current.onclose = () => {
+    socketRef.current.on('disconnect', () => {
       setEstaConectado(false);
       setEstadoDeConexion('Desconectado');
-      webSocketRef.current = null;
-    };
+    });
 
-    webSocketRef.current.onerror = (error) => {
-      console.log('Error de WebSocket:', error);
+    socketRef.current.on('connect_error', (error) => {
+      console.log('Error de red:', error);
       setEstaConectado(false);
-      setEstadoDeConexion('Error de conexión');
-    };
+      setEstadoDeConexion('Bloqueado por el Firewall de Windows');
+    });
   };
 
   const desconectarDelServidor = () => {
-    if (webSocketRef.current) {
-      webSocketRef.current.close();
+    if (socketRef.current) {
+      socketRef.current.disconnect();
     }
   };
 
   const enviarEventoPresionar = (tecla) => {
-    if (webSocketRef.current && estaConectado) {
-      webSocketRef.current.send(JSON.stringify({ tipo: 'keydown', tecla: tecla }));
+    if (socketRef.current && estaConectado) {
+      socketRef.current.emit('message', { tipo: 'keydown', tecla: tecla });
     }
   };
 
   const enviarEventoSoltar = (tecla) => {
-    if (webSocketRef.current && estaConectado) {
-      webSocketRef.current.send(JSON.stringify({ tipo: 'keyup', tecla: tecla }));
+    if (socketRef.current && estaConectado) {
+      socketRef.current.emit('message', { tipo: 'keyup', tecla: tecla });
     }
   };
 
@@ -72,7 +76,7 @@ export default function App() {
         
         <TextInput
           style={styles.inputIp}
-          placeholder="Ej: 192.168.1.15"
+          placeholder="Ej: 192.168.1.39"
           value={direccionIp}
           onChangeText={setDireccionIp}
           keyboardType="numeric"
