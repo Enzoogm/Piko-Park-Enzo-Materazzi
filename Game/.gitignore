@@ -1,0 +1,16 @@
+# dependencies
+node_modules/
+
+# expo
+.expo/
+.expo-shared/
+
+# builds
+dist/
+build/
+
+# env
+.env
+
+# bun
+bun.lockb
