@@ -215,11 +215,12 @@ const styles = StyleSheet.create({
   textoBotonSecundario: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   textoEstado: { color: "#aaa", marginTop: 20 },
   contenedorGamepad: { flex: 1, backgroundColor: "#121212" },
+
   barraSuperior: {
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 15,
-    alignItems: "center",
+    paddingHorizontal: 25,
+    paddingVertical: 15,
   },
   indicadorLed: { flexDirection: "row", alignItems: "center" },
   led: { width: 12, height: 12, borderRadius: 6, marginRight: 8 },

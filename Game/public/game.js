@@ -1,179 +1,162 @@
-const socketConexion = io();
+const socket = io();
 
-const configuracionDelJuego = {
-    type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 900 }, // Gravedad fuerte para que caigan rápido
-            debug: false // Ponelo en true si querés ver las cajas verdes de colisión
-        }
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  parent: "juego",
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: { y: 900 },
+      debug: false,
     },
-    scene: { 
-        preload: cargarGraficos, 
-        create: crearEscenario, 
-        update: actualizarFisicas 
-    }
+  },
+  scene: {
+    preload,
+    create,
+    update,
+  },
 };
 
-const juego = new Phaser.Game(configuracionDelJuego);
+new Phaser.Game(config);
 
-// Variables globales del nivel
-let diccionarioDeJugadores = {}; // Guarda a todos los que entran
-let grupoDeParedes;
-let objetoPuerta;
-let objetoLlave;
-let jugadorQueTieneLaLlave = null;
-let zonaDeVictoria;
+let jugadores = {};
+let plataformas;
+let llave;
+let puerta;
+let jugadorConLlave = null;
 
-// 1. Dibujamos los gráficos básicos (para no usar imágenes externas)
-function cargarGraficos() {
-    this.add.graphics().fillStyle(0xffffff).fillRect(0, 0, 40, 40).generateTexture('texturaCubo', 40, 40);
-    this.add.graphics().fillStyle(0x666666).fillRect(0, 0, 800, 40).generateTexture('texturaPiso', 800, 40);
-    this.add.graphics().fillStyle(0xffd700).fillRect(0, 0, 20, 20).generateTexture('texturaLlave', 20, 20);
-    this.add.graphics().fillStyle(0x8B4513).fillRect(0, 0, 60, 80).generateTexture('texturaPuerta', 60, 80);
+function preload() {
+  this.add
+    .graphics()
+    .fillStyle(0xffffff)
+    .fillRect(0, 0, 40, 40)
+    .generateTexture("player", 40, 40);
+  this.add
+    .graphics()
+    .fillStyle(0x666666)
+    .fillRect(0, 0, 800, 40)
+    .generateTexture("ground", 800, 40);
+  this.add
+    .graphics()
+    .fillStyle(0xffd700)
+    .fillRect(0, 0, 20, 20)
+    .generateTexture("key", 20, 20);
+  this.add
+    .graphics()
+    .fillStyle(0x8b4513)
+    .fillRect(0, 0, 60, 80)
+    .generateTexture("door", 60, 80);
 }
 
-// 2. Armamos el nivel
-function crearEscenario() {
-    grupoDeParedes = this.physics.add.staticGroup();
-    
-    // El piso principal
-    grupoDeParedes.create(400, 580, 'texturaPiso');
-    
-    // Plataformas (Nivel 2 - Apilarse)
-    grupoDeParedes.create(200, 420, 'texturaPiso').setScale(0.3, 1).refreshBody();
-    grupoDeParedes.create(650, 250, 'texturaPiso').setScale(0.4, 1).refreshBody();
+function create() {
+  plataformas = this.physics.add.staticGroup();
+  plataformas.create(400, 580, "ground");
 
-    // La Puerta de salida
-    objetoPuerta = this.physics.add.staticSprite(720, 190, 'texturaPuerta');
-    zonaDeVictoria = this.add.zone(720, 190, 80, 100);
-    this.physics.add.existing(zonaDeVictoria, true);
+  plataformas.create(200, 420, "ground").setScale(0.3, 1).refreshBody();
 
-    // La Llave (arriba a la izquierda, obliga a apilarse)
-    objetoLlave = this.physics.add.sprite(200, 350, 'texturaLlave');
-    this.physics.add.collider(objetoLlave, grupoDeParedes);
+  // 🔥 CLAVE: sin gravedad
+  llave = this.physics.add.sprite(200, 350, "key");
+  llave.body.allowGravity = false;
 
-    // --- MANEJO DE RED ---
+  puerta = this.physics.add.staticSprite(750, 500, "door");
 
-    // Entra un nuevo jugador
-    socketConexion.on('nuevoJugador', (datos) => {
-        // Creamos el cuadradito
-        const nuevoSprite = this.physics.add.sprite(50, 500, 'texturaCubo');
-        nuevoSprite.setTint(datos.color);
-        nuevoSprite.setCollideWorldBounds(true); // No pueden salir de la pantalla (Wall Hug Test)
-        
-        // Choca contra el piso
-        this.physics.add.collider(nuevoSprite, grupoDeParedes);
-        
-        // Magia para Apilarse: hacemos que choque contra los demás jugadores
-        const listaDeSpritesDeJugadores = Object.values(diccionarioDeJugadores).map(j => j.personaje);
-        this.physics.add.collider(nuevoSprite, listaDeSpritesDeJugadores); 
+  socket.on("nuevoJugador", (data) => {
+    const player = this.physics.add.sprite(50, 500, "player");
+    player.setTint(data.color);
+    player.setCollideWorldBounds(true);
 
-        // Si toca la llave, se la apropia
-        this.physics.add.overlap(nuevoSprite, objetoLlave, () => {
-            if (!jugadorQueTieneLaLlave) {
-                jugadorQueTieneLaLlave = nuevoSprite;
-            }
-        });
+    this.physics.add.collider(player, plataformas);
 
-        // Guardamos su estado
-        diccionarioDeJugadores[datos.idDelSocket] = {
-            personaje: nuevoSprite,
-            botones: { izquierda: false, derecha: false, saltar: false }
-        };
+    Object.values(jugadores).forEach((j) => {
+      this.physics.add.collider(player, j.sprite);
     });
 
-    // Se va un jugador
-    socketConexion.on('jugadorDesconectado', (idDelSocket) => {
-        if (diccionarioDeJugadores[idDelSocket]) {
-            // Si el que se fue tenía la llave, la soltamos donde estaba originalmente
-            if (jugadorQueTieneLaLlave === diccionarioDeJugadores[idDelSocket].personaje) {
-                jugadorQueTieneLaLlave = null;
-                objetoLlave.setPosition(200, 350);
-            }
-            // Borramos el muñeco de la pantalla
-            diccionarioDeJugadores[idDelSocket].personaje.destroy();
-            delete diccionarioDeJugadores[idDelSocket];
-        }
+    this.physics.add.overlap(player, llave, () => {
+      if (!jugadorConLlave) {
+        jugadorConLlave = player;
+      }
     });
 
-    // El celular mandó un comando
-    socketConexion.on('inputDeJugador', (datosDelBoton) => {
-        const jugador = diccionarioDeJugadores[datosDelBoton.idDelSocket];
-        if (!jugador) return;
+    jugadores[data.idDelSocket] = {
+      sprite: player,
+      controles: { left: false, right: false, jump: false },
+    };
+  });
 
-        const estaApretando = datosDelBoton.tipoDeEvento === 'keydown';
+  socket.on("jugadorDesconectado", (id) => {
+    if (jugadores[id]) {
+      jugadores[id].sprite.destroy();
+      delete jugadores[id];
 
-        if (datosDelBoton.teclaPresionada === 'ArrowLeft') jugador.botones.izquierda = estaApretando;
-        if (datosDelBoton.teclaPresionada === 'ArrowRight') jugador.botones.derecha = estaApretando;
-        if (datosDelBoton.teclaPresionada === 'Space' || datosDelBoton.teclaPresionada === 'ArrowUp') jugador.botones.saltar = estaApretando;
-    });
+      // 🔥 si el que tenía la llave se va → reset
+      if (jugadorConLlave === jugadores[id]?.sprite) {
+        jugadorConLlave = null;
+        llave.setPosition(200, 350);
+      }
+    }
+  });
+
+  socket.on("inputDeJugador", (input) => {
+    const j = jugadores[input.idDelSocket];
+    if (!j) return;
+
+    const activo = input.tipoDeEvento === "keydown";
+
+    if (input.teclaPresionada === "ArrowLeft") j.controles.left = activo;
+    if (input.teclaPresionada === "ArrowRight") j.controles.right = activo;
+    if (input.teclaPresionada === "Space") j.controles.jump = activo;
+  });
 }
 
-// 3. Calculamos la física 60 veces por segundo
-function actualizarFisicas() {
-    // Movemos a cada jugador según lo que aprieta en su celular
-    Object.values(diccionarioDeJugadores).forEach(jugador => {
-        const sprite = jugador.personaje;
-        const botones = jugador.botones;
-        const velocidadMovimiento = 250;
+function update() {
+  Object.values(jugadores).forEach((j) => {
+    const p = j.sprite;
 
-        // Izquierda / Derecha
-        if (botones.izquierda) {
-            sprite.setVelocityX(-velocidadMovimiento);
-        } else if (botones.derecha) {
-            sprite.setVelocityX(velocidadMovimiento);
-        } else {
-            sprite.setVelocityX(0); // Frena al instante
-        }
+    if (j.controles.left) p.setVelocityX(-200);
+    else if (j.controles.right) p.setVelocityX(200);
+    else p.setVelocityX(0);
 
-        // Salto (Solo si está pisando algo sólido abajo)
-        if (botones.saltar && sprite.body.touching.down) {
-            sprite.setVelocityY(-480);
-        }
-    });
-
-    // Si alguien tiene la llave, la hacemos flotar arriba de su cabeza
-    if (jugadorQueTieneLaLlave) {
-        objetoLlave.setPosition(jugadorQueTieneLaLlave.x, jugadorQueTieneLaLlave.y - 30);
-        objetoLlave.setVelocity(0, 0);
-        objetoLlave.body.allowGravity = false;
+    if (j.controles.jump && p.body.touching.down) {
+      p.setVelocityY(-450);
     }
+  });
 
-    // Vemos si ganaron
-    comprobarSiGanaronElNivel(this);
+  // 🔥 seguir jugador con llave
+  if (jugadorConLlave) {
+    llave.setPosition(jugadorConLlave.x, jugadorConLlave.y - 30);
+  }
+
+  logica();
 }
 
-// 4. Lógica para ganar el nivel
-function comprobarSiGanaronElNivel(escena) {
-    const cantidadTotal = Object.keys(diccionarioDeJugadores).length;
-    if (cantidadTotal === 0) return; // Si no hay nadie, no hacemos nada
+function logica() {
+  const lista = Object.values(jugadores);
+  if (lista.length < 3) return;
 
-    // PASO A: La puerta solo se abre si el que tiene la llave se acerca
-    let laPuertaEstaAbierta = false;
-    if (jugadorQueTieneLaLlave && escena.physics.overlap(jugadorQueTieneLaLlave, zonaDeVictoria)) {
-        laPuertaEstaAbierta = true;
-        objetoPuerta.setTint(0x00FF00); // Se pone verde
-    } else {
-        objetoPuerta.clearTint(); // Vuelve a ser marrón
+  let puertaAbierta = false;
+
+  if (
+    jugadorConLlave &&
+    Phaser.Geom.Intersects.RectangleToRectangle(
+      jugadorConLlave.getBounds(),
+      puerta.getBounds(),
+    )
+  ) {
+    puertaAbierta = true;
+  }
+
+  if (puertaAbierta) {
+    const todos = lista.every((j) =>
+      Phaser.Geom.Intersects.RectangleToRectangle(
+        j.sprite.getBounds(),
+        puerta.getBounds(),
+      ),
+    );
+
+    if (todos) {
+      console.log("GANARON");
     }
-
-    // PASO B: Si la puerta está verde, exigimos que TODOS estén ahí
-    if (laPuertaEstaAbierta) {
-        let estanTodosAdentro = true;
-        Object.values(diccionarioDeJugadores).forEach(jugador => {
-            if (!escena.physics.overlap(jugador.personaje, zonaDeVictoria)) {
-                estanTodosAdentro = false;
-            }
-        });
-
-        // Si están todos y la puerta está abierta... ¡Ganaron!
-        if (estanTodosAdentro) {
-            console.log("¡GANARON EL NIVEL!");
-            // Se le podría poner un texto gigante en la pantalla acá
-        }
-    }
+  }
 }

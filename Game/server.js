@@ -1,57 +1,94 @@
-const express = require('express');
+const express = require("express");
 const app = express();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
+const http = require("http").Server(app);
+const io = require("socket.io")(http);
+const os = require("os");
 
-// Le decimos al servidor que muestre los archivos de la carpeta "public"
-app.use(express.static('public'));
+app.use(express.static("public"));
 
 const PUERTO = 3000;
 let cantidadJugadores = 0;
-const coloresParaJugadores = ['0xff0000', '0x00ff00', '0x0000ff', '0xffff00']; // Rojo, Verde, Azul, Amarillo
+const coloresParaJugadores = ["0xff0000", "0x00ff00", "0x0000ff", "0xffff00"];
 
-io.on('connection', (socket) => {
-    // 1. REGLA DEL JUEGO: Máximo 4 jugadores (Hot-Join test)
-    if (cantidadJugadores >= 4) {
-        console.log('Alguien intentó entrar pero la sala está llena.');
-        socket.disconnect(true);
-        return;
+// 🔥 DETECTOR ROBUSTO DE IP LOCAL (SIN HARDCODE)
+function obtenerIPLocal() {
+  const interfaces = os.networkInterfaces();
+
+  let mejorIP = null;
+
+  for (let nombre in interfaces) {
+    for (let net of interfaces[nombre]) {
+      if (net.family !== "IPv4" || net.internal) continue;
+
+      const ip = net.address;
+
+      // ❌ ignorar redes virtuales comunes
+      if (
+        nombre.toLowerCase().includes("virtual") ||
+        nombre.toLowerCase().includes("vmware") ||
+        nombre.toLowerCase().includes("hyper-v") ||
+        nombre.toLowerCase().includes("wsl")
+      ) {
+        continue;
+      }
+
+      // ✅ prioridad alta: redes privadas reales
+      if (
+        ip.startsWith("192.168.") ||
+        ip.startsWith("10.") ||
+        (ip.startsWith("172.") &&
+          parseInt(ip.split(".")[1]) >= 16 &&
+          parseInt(ip.split(".")[1]) <= 31)
+      ) {
+        return ip;
+      }
+
+      // fallback
+      if (!mejorIP) mejorIP = ip;
     }
+  }
 
-    // 2. Asignamos un color según el orden de llegada
-    const colorAsignado = coloresParaJugadores[cantidadJugadores];
-    socket.color = colorAsignado;
-    cantidadJugadores++;
-    
-    console.log(`¡Jugador conectado! Total en sala: ${cantidadJugadores}`);
+  return mejorIP || "localhost";
+}
 
-    // Le avisamos al juego en la pantalla que dibuje un nuevo personaje
-    io.emit('nuevoJugador', { idDelSocket: socket.id, color: colorAsignado });
+const ip = obtenerIPLocal();
 
-    // 3. Escuchamos los botones que aprietan en el celular
-    socket.on('message', (mensajeRecibido) => {
-        try {
-            const datosDelBoton = typeof mensajeRecibido === 'string' ? JSON.parse(mensajeRecibido) : mensajeRecibido;
-            
-            // Reenviamos ese botón apretado directo al juego para que mueva al personaje
-            io.emit('inputDeJugador', {
-                idDelSocket: socket.id,
-                tipoDeEvento: datosDelBoton.tipo, // 'keydown' o 'keyup'
-                teclaPresionada: datosDelBoton.tecla // 'ArrowRight', 'Space', etc.
-            });
-        } catch (error) {
-            console.error("Error al leer el botón:", error);
-        }
-    });
-
-    // 4. Si alguien cierra la app en el celu, lo borramos de la pantalla
-    socket.on('disconnect', () => {
-        cantidadJugadores--;
-        console.log(`Jugador se fue. Total en sala: ${cantidadJugadores}`);
-        io.emit('jugadorDesconectado', socket.id);
-    });
+// endpoint para frontend
+app.get("/ip", (req, res) => {
+  res.json({ ip });
 });
 
-http.listen(PUERTO, '0.0.0.0', () => {
-    console.log(`Servidor del juego encendido. Escuchando en el puerto ${PUERTO}`);
+io.on("connection", (socket) => {
+  if (cantidadJugadores >= 4) {
+    socket.disconnect(true);
+    return;
+  }
+
+  const colorAsignado = coloresParaJugadores[cantidadJugadores];
+  cantidadJugadores++;
+
+  console.log(`Jugador conectado. Total: ${cantidadJugadores}`);
+
+  io.emit("nuevoJugador", {
+    idDelSocket: socket.id,
+    color: colorAsignado,
+  });
+
+  socket.on("message", (msg) => {
+    io.emit("inputDeJugador", {
+      idDelSocket: socket.id,
+      tipoDeEvento: msg.tipo,
+      teclaPresionada: msg.tecla,
+    });
+  });
+
+  socket.on("disconnect", () => {
+    cantidadJugadores--;
+    console.log(`Jugador desconectado. Total: ${cantidadJugadores}`);
+    io.emit("jugadorDesconectado", socket.id);
+  });
+});
+
+http.listen(PUERTO, "0.0.0.0", () => {
+  console.log(`Servidor corriendo en http://${ip}:${PUERTO}`);
 });
