@@ -15,7 +15,6 @@ export default function App() {
 
   const socketRef = useRef(null);
   
-  // Memoria central: Anota qué teclas están siendo apretadas AHORA MISMO
   const teclasActivasRef = useRef(new Set());
 
   useEffect(() => {
@@ -68,11 +67,10 @@ export default function App() {
     }
   };
 
-  // ==========================================================
-  // 🎮 EL ESCÁNER DE PANTALLA (MULTITOUCH REAL NIVEL DIOS)
-  // ==========================================================
+
+
+
   const procesarToquesGlobables = (e) => {
-    // Array nativo que contiene TODOS los dedos apoyados en este instante
     const touches = e.nativeEvent.touches; 
     
     const screenWidth = Dimensions.get('window').width;
@@ -80,27 +78,21 @@ export default function App() {
 
     let nuevasTeclas = new Set();
 
-    // Revisamos dedo por dedo dónde está apoyado
     for (let i = 0; i < touches.length; i++) {
       const { pageX, pageY } = touches[i];
 
-      // MITAD DERECHA: Cualquier toque en la mitad derecha de la pantalla es SALTO (A)
       if (pageX > screenWidth / 2) {
         nuevasTeclas.add("Space");
       }
-      // MITAD IZQUIERDA: Joystick direccional dinámico
       else {
-        // Asumimos el centro visual del D-Pad en estas coordenadas
         const centroX = 150;
         const centroY = screenHeight - 120;
 
         const diffX = pageX - centroX;
         const diffY = pageY - centroY;
 
-        // Deadzone (Zona muerta): Si toca el medio exacto de la cruz, no hace nada
         if (Math.abs(diffX) < 30 && Math.abs(diffY) < 30) continue;
 
-        // Detectamos si está moviendo el dedo más en horizontal o en vertical
         if (Math.abs(diffX) > Math.abs(diffY)) {
           if (diffX > 0) nuevasTeclas.add("ArrowRight");
           else nuevasTeclas.add("ArrowLeft");
@@ -111,29 +103,19 @@ export default function App() {
       }
     }
 
-    // ==============================================
-    // COMPARADOR DE ESTADOS (Manda las señales justas)
-    // ==============================================
-    
-    // 1. Vemos qué teclas estaban apretadas y AHORA no. Las soltamos.
+
     teclasActivasRef.current.forEach(teclaVieja => {
       if (!nuevasTeclas.has(teclaVieja)) {
         enviarEventoSoltar(teclaVieja);
       }
     });
-
-    // 2. Vemos qué teclas nuevas aparecieron. Las presionamos.
     nuevasTeclas.forEach(teclaNueva => {
       if (!teclasActivasRef.current.has(teclaNueva)) {
         enviarEventoPresionar(teclaNueva);
       }
     });
-
-    // 3. Actualizamos la memoria
     teclasActivasRef.current = nuevasTeclas;
   };
-
-  // ==========================================================
 
   if (!estaConectado) {
     return (
@@ -158,8 +140,6 @@ export default function App() {
   return (
     <SafeAreaView style={styles.contenedorGamepad}>
       <StatusBar hidden={true} />
-      
-      {/* BARRA SUPERIOR (Desconectada del escáner para que los botones funcionen) */}
       <View style={styles.barraSuperior}>
         <View style={styles.indicadorLed}>
           <View style={[styles.led, estaConectado ? styles.ledEncendido : styles.ledApagado]} />
@@ -170,7 +150,6 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
-      {/* EL PANEL DE CRISTAL GIGANTE QUE ESCANEA TODOS TUS DEDOS */}
       <View 
         style={styles.zonaControles}
         onTouchStart={procesarToquesGlobables}
@@ -178,7 +157,6 @@ export default function App() {
         onTouchEnd={procesarToquesGlobables}
         onTouchCancel={procesarToquesGlobables}
       >
-        {/* LA CAPA VISUAL (pointerEvents="none" para que sea 100% fantasmal a los toques) */}
         <View style={styles.capaVisualFantasmal} pointerEvents="none">
           <View style={styles.zonaDPad}>
             <View style={styles.filaDPad}>
@@ -221,10 +199,8 @@ const styles = StyleSheet.create({
   botonDesconectar: { padding: 8, backgroundColor: "#333", borderRadius: 5 },
   textoDesconectar: { color: "#fff", fontSize: 12 },
   
-  // Esta es la zona que capta los toques (ocupa toda la pantalla menos la barra superior)
   zonaControles: { flex: 1, position: 'relative' },
   
-  // Dibujamos los controles de forma fantasmal encima
   capaVisualFantasmal: { ...StyleSheet.absoluteFillObject, flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 50, paddingBottom: 20 },
   
   zonaDPad: { alignItems: "center", justifyContent: "center" },

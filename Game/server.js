@@ -10,7 +10,6 @@ const PUERTO = 3000;
 let cantidadJugadores = 0;
 const coloresParaJugadores = ["0xff0000", "0x00ff00", "0x0000ff", "0xffff00"];
 
-// 🔥 DETECTOR ROBUSTO DE IP LOCAL (SIN HARDCODE)
 function obtenerIPLocal() {
   const interfaces = os.networkInterfaces();
 
@@ -21,8 +20,6 @@ function obtenerIPLocal() {
       if (net.family !== "IPv4" || net.internal) continue;
 
       const ip = net.address;
-
-      // ❌ ignorar redes virtuales comunes
       if (
         nombre.toLowerCase().includes("virtual") ||
         nombre.toLowerCase().includes("vmware") ||
@@ -31,8 +28,6 @@ function obtenerIPLocal() {
       ) {
         continue;
       }
-
-      // ✅ prioridad alta: redes privadas reales
       if (
         ip.startsWith("192.168.") ||
         ip.startsWith("10.") ||

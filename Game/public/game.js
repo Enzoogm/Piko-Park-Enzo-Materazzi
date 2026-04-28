@@ -56,7 +56,6 @@ function create() {
 
   plataformas.create(200, 420, "ground").setScale(0.3, 1).refreshBody();
 
-  // 🔥 CLAVE: sin gravedad
   llave = this.physics.add.sprite(200, 350, "key");
   llave.body.allowGravity = false;
 
@@ -90,7 +89,6 @@ function create() {
       jugadores[id].sprite.destroy();
       delete jugadores[id];
 
-      // 🔥 si el que tenía la llave se va → reset
       if (jugadorConLlave === jugadores[id]?.sprite) {
         jugadorConLlave = null;
         llave.setPosition(200, 350);
@@ -122,8 +120,6 @@ function update() {
       p.setVelocityY(-450);
     }
   });
-
-  // 🔥 seguir jugador con llave
   if (jugadorConLlave) {
     llave.setPosition(jugadorConLlave.x, jugadorConLlave.y - 30);
   }
