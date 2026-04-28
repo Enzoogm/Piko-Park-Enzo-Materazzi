@@ -8,17 +8,14 @@ app.use(express.static("public"));
 
 const PUERTO = 3000;
 let cantidadJugadores = 0;
-const coloresParaJugadores = ["0xff0000", "0x00ff00", "0x0000ff", "0xffff00"];
+const coloresParaJugadores = ["0xff4444", "0x44ff44", "0x4488ff", "0xffff44"];
 
 function obtenerIPLocal() {
   const interfaces = os.networkInterfaces();
-
   let mejorIP = null;
-
   for (let nombre in interfaces) {
     for (let net of interfaces[nombre]) {
       if (net.family !== "IPv4" || net.internal) continue;
-
       const ip = net.address;
       if (
         nombre.toLowerCase().includes("virtual") ||
@@ -37,37 +34,42 @@ function obtenerIPLocal() {
       ) {
         return ip;
       }
-
-      // fallback
       if (!mejorIP) mejorIP = ip;
     }
   }
-
   return mejorIP || "localhost";
 }
 
 const ip = obtenerIPLocal();
 
-// endpoint para frontend
 app.get("/ip", (req, res) => {
   res.json({ ip });
 });
 
 io.on("connection", (socket) => {
-  if (cantidadJugadores >= 4) {
-    socket.disconnect(true);
-    return;
+  const esPantalla = socket.handshake.query.tipo === "pantalla";
+
+  if (esPantalla) {
+    console.log("🖥️  PANTALLA PRINCIPAL CONECTADA");
+  } else {
+    if (cantidadJugadores >= 4) {
+      console.log("❌ RECHAZADO: Sala llena");
+      socket.disconnect(true);
+      return;
+    }
+
+    const colorAsignado = coloresParaJugadores[cantidadJugadores];
+    cantidadJugadores++;
+
+    console.log(
+      `📱 MANDO CONECTADO [ID: ${socket.id}]. Total Jugadores: ${cantidadJugadores}`,
+    );
+
+    io.emit("nuevoJugador", {
+      idDelSocket: socket.id,
+      color: colorAsignado,
+    });
   }
-
-  const colorAsignado = coloresParaJugadores[cantidadJugadores];
-  cantidadJugadores++;
-
-  console.log(`Jugador conectado. Total: ${cantidadJugadores}`);
-
-  io.emit("nuevoJugador", {
-    idDelSocket: socket.id,
-    color: colorAsignado,
-  });
 
   socket.on("message", (msg) => {
     io.emit("inputDeJugador", {
@@ -77,13 +79,23 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("error", (err) => {
+    console.log(`⚠️ ERROR DE CONEXIÓN [ID: ${socket.id}]:`, err.message);
+  });
+
   socket.on("disconnect", () => {
-    cantidadJugadores--;
-    console.log(`Jugador desconectado. Total: ${cantidadJugadores}`);
-    io.emit("jugadorDesconectado", socket.id);
+    if (esPantalla) {
+      console.log("🖥️  PANTALLA PRINCIPAL DESCONECTADA");
+    } else {
+      cantidadJugadores--;
+      console.log(
+        `👋 MANDO DESCONECTADO [ID: ${socket.id}]. Total Jugadores: ${cantidadJugadores}`,
+      );
+      io.emit("jugadorDesconectado", socket.id);
+    }
   });
 });
 
 http.listen(PUERTO, "0.0.0.0", () => {
-  console.log(`Servidor corriendo en http://${ip}:${PUERTO}`);
+  console.log(`🚀 SERVIDOR LISTO EN: http://${ip}:${PUERTO}`);
 });
