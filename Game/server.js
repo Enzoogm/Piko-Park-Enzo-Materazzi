@@ -51,6 +51,9 @@ io.on("connection", (socket) => {
 
   if (esPantalla) {
     console.log("🖥️  PANTALLA PRINCIPAL CONECTADA");
+    // Emitir evento para resetear el estado del cliente (como presionar F5)
+    console.log("📢 Notificando reinicio de servidor a todos los clientes");
+    io.emit("servidorReiniciado");
   } else {
     if (cantidadJugadores >= 4) {
       console.log("❌ RECHAZADO: Sala llena");
