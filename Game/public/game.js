@@ -19,8 +19,7 @@ let socket = io({ query: { tipo: "pantalla" } });
 let contadorColores = 0;
 let nivelActual = 1;
 
-// NUEVOS BLOQUES: 9 = Botón, 10 = Puente Holográfico
-// MAPA 1: Exactamente 12 filas (600px) para que no se corte el piso
+// MAPA 1: Exactamente 12 filas 
 const mapaNivel1 = [
   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   [0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0],
@@ -36,20 +35,20 @@ const mapaNivel1 = [
   [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
 ];
 
-// MAPA 2: Parkour frenético ajustado a 12 filas
+// MAPA 2: Base de la puerta más abajo (fila 5) para no golpear el techo
 const mapaNivel2 = [
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,4,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,0,0,0,9,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
-  [1,1,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,1,1,10,10,10,10,10,10,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], // Llave
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0], // Puerta más abajo
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0], // Plataforma puerta
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], // Botón
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], // Plataforma botón
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [1,1,1,1,0,0,1,0,0,1,0,0,1,1,1,1,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,1,1,1,1,0,0,0,0,11,11,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], // Trampolines
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
 ];
 
 function obtenerMapaActual() {
@@ -79,6 +78,7 @@ class SceneGame extends Phaser.Scene {
     this.agua = null;
     this.botones = null;
     this.puentes = null;
+    this.trampolines = null; 
     this.grupoJugadores = null;
     this.txtVictoria = null;
     this.puertaAbierta = false;
@@ -140,6 +140,14 @@ class SceneGame extends Phaser.Scene {
       ctx.fillStyle = "#f1c40f"; 
       ctx.fillRect(2, 2, w-4, 16);
     }
+    else if (key === "trampoline") {
+      ctx.fillStyle = "#7f8c8d"; // Base
+      ctx.fillRect(5, 30, 40, 20);
+      ctx.fillStyle = "#e67e22"; // Tela
+      ctx.fillRect(10, 25, 30, 5);
+      ctx.fillStyle = "#d35400"; // Sombra
+      ctx.fillRect(10, 28, 30, 2);
+    }
     else if (key === "cloud") { 
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
@@ -188,6 +196,7 @@ class SceneGame extends Phaser.Scene {
     this.crearTextura("cloud", null, null, null, 50, 50, false);
     this.crearTextura("button", null, null, null, 50, 50, false);
     this.crearTextura("bridge", null, null, null, 50, 50, false);
+    this.crearTextura("trampoline", null, null, null, 50, 50, false);
     this.crearTexturaJugador();
     this.crearTexturaLlave();
 
@@ -195,6 +204,7 @@ class SceneGame extends Phaser.Scene {
     this.agua = this.physics.add.staticGroup();
     this.botones = this.physics.add.staticGroup();
     this.puentes = this.physics.add.staticGroup();
+    this.trampolines = this.physics.add.staticGroup();
     this.grupoJugadores = this.physics.add.group();
 
     const mapaActual = obtenerMapaActual();
@@ -240,12 +250,23 @@ class SceneGame extends Phaser.Scene {
           pte.body.setOffset(0, 0);
           pte.body.enable = false;
           pte.setAlpha(0.3);
+        } else if (tipo === 11) { 
+          const tramp = this.trampolines.create(posX, posY, "trampoline");
+          tramp.body.setSize(50, 25);
+          tramp.body.setOffset(0, 25);
+          tramp.body.enable = true; 
+          
+          const txtCount = this.add.text(posX, posY - 30, "", { fontSize: "28px", fill: "#FFF", fontStyle: "bold", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5);
+          tramp.setData("txt", txtCount);
+          tramp.setData("estado", "idle"); 
         }
       }
     }
 
     this.physics.add.collider(this.grupoJugadores, this.plataformas);
     this.physics.add.collider(this.grupoJugadores, this.puentes);
+    this.physics.add.collider(this.grupoJugadores, this.trampolines);
+
     this.physics.add.collider(this.grupoJugadores, this.grupoJugadores);
     this.physics.add.overlap(this.grupoJugadores, this.agua, this.respawnEquipo, null, this);
 
@@ -313,6 +334,12 @@ class SceneGame extends Phaser.Scene {
     });
     this.jugadoresAdentro.clear();
     this.equipoTieneLlave = false; this.puertaAbierta = false; this.jugadorConLlaveId = null;
+    
+    this.trampolines.getChildren().forEach(tramp => {
+      tramp.setData("estado", "idle");
+      tramp.getData("txt").setText("");
+    });
+
     if (this.llave) { this.llave.setVisible(true).setPosition(this.llaveOriginalX, this.llaveOriginalY).body.enable = true; }
     if (this.puerta) { this.puerta.setTexture("door").refreshBody(); }
   }
@@ -334,6 +361,7 @@ class SceneGame extends Phaser.Scene {
     this.agua.clear(true, true);
     this.botones.clear(true, true);
     this.puentes.clear(true, true);
+    this.trampolines.clear(true, true);
     if (this.llave) this.llave.destroy();
     if (this.puerta) this.puerta.destroy();
 
@@ -366,7 +394,14 @@ class SceneGame extends Phaser.Scene {
       if (portador && !portador.adentro) this.llave.setPosition(portador.sprite.x, portador.sprite.y - 35);
     }
 
-    let algunBotonPisado = false;
+    // =================================================================
+    // HACK PARA TESTEAR NIVEL 1 MÁS RÁPIDO (Puentes siempre activos)
+    // Cuando lo vayas a usar final, borrá el `|| nivelActual === 1`
+    // =================================================================
+    let algunBotonPisado = false; 
+    if (nivelActual === 1) {
+      algunBotonPisado = true;
+    }
     
     this.botones.getChildren().forEach(btn => {
       let pisado = false;
@@ -387,11 +422,55 @@ class SceneGame extends Phaser.Scene {
 
     this.puentes.getChildren().forEach(pte => {
       if (algunBotonPisado) {
-        pte.body.enable = true;
-        pte.setAlpha(1);
+        pte.body.enable = true; pte.setAlpha(1);
       } else {
-        pte.body.enable = false;
-        pte.setAlpha(0.3);
+        pte.body.enable = false; pte.setAlpha(0.3);
+      }
+    });
+
+    this.trampolines.getChildren().forEach(tramp => {
+      if (algunBotonPisado && tramp.getData("estado") === "idle") {
+        tramp.setData("estado", "contando");
+        let contador = 5; 
+        const txt = tramp.getData("txt");
+        txt.setText(contador);
+
+        this.time.addEvent({
+          delay: 1000,
+          repeat: 4, 
+          callback: () => {
+            if (!algunBotonPisado) {
+              txt.setText("");
+              tramp.setData("estado", "idle");
+              return;
+            }
+
+            contador--;
+            if (contador > 0) {
+              txt.setText(contador);
+            } else {
+              txt.setText(""); 
+              tramp.setData("estado", "disparado");
+              
+              Object.values(this.jugadoresSprites).forEach(j => {
+                const p = j.sprite;
+                const distHorizontal = Math.abs(p.x - tramp.x);
+                const distVertical = tramp.y - p.y;
+                if (distHorizontal < 40 && distVertical > 0 && distVertical < 70) {
+                  // VELOCIDAD AJUSTADA PARA NO CHOCAR EL TECHO
+                  p.setVelocityY(-850); 
+                }
+              });
+
+              this.time.delayedCall(1500, () => {
+                tramp.setData("estado", "idle");
+              });
+            }
+          }
+        });
+      } else if (!algunBotonPisado && tramp.getData("estado") === "contando") {
+        tramp.setData("estado", "idle");
+        tramp.getData("txt").setText("");
       }
     });
 
