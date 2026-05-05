@@ -10,8 +10,8 @@ const CONFIG = {
   COLORES_JUGADORES: [
     0xff4444, 0x44ff44, 0x4488ff, 0xffff44
   ],
-  MAX_JUGADORES: 4, // <-- Limitado a 4 jugadores
-  TIEMPO_VICTORIA: 2500, // Tiempo de "Clean Screen" antes del nivel 2
+  MAX_JUGADORES: 4, 
+  TIEMPO_VICTORIA: 2500, 
   TOTAL_NIVELES: 2,
 };
 
@@ -19,36 +19,37 @@ let socket = io({ query: { tipo: "pantalla" } });
 let contadorColores = 0;
 let nivelActual = 1;
 
+// NUEVOS BLOQUES: 9 = Botón, 10 = Puente Holográfico
+// MAPA 1: Exactamente 12 filas (600px) para que no se corte el piso
 const mapaNivel1 = [
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,4,0],
-  [1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,2,2,2,1,1,1,1,1,1,1,2,2,2,1,2,2,2,1,2,2,2,1,2,2,2,2,2,1,1,1,2,2,2,2,2,1,1,1,1,1,1,1,1],
-  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,9,0,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],
+  [1,1,1,1,0,0,1,0,0,1,0,0,1,0,0,1,1,1,1,10,10,10,10,10,10,10,1,1,1,1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
 ];
 
+// MAPA 2: Parkour frenético ajustado a 12 filas
 const mapaNivel2 = [
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0],
-  [1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0],
-  [1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0],
-  [1,1,0,0,1,1,0,0,1,1,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,0,0,0,1,1,0,0],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,4,0],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,4,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,0,0,0,9,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
+  [1,1,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,1,1,10,10,10,10,10,10,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
 ];
 
 function obtenerMapaActual() {
@@ -76,6 +77,8 @@ class SceneGame extends Phaser.Scene {
     this.puerta = null;
     this.plataformas = null;
     this.agua = null;
+    this.botones = null;
+    this.puentes = null;
     this.grupoJugadores = null;
     this.txtVictoria = null;
     this.puertaAbierta = false;
@@ -83,24 +86,72 @@ class SceneGame extends Phaser.Scene {
     contadorColores = 0;
   }
 
-  // FIX CANDADO TEXTURAS: Evita el error "Texture key already in use"
   crearTextura(key, col1, col2, col3, w, h, esPiso) {
-    if (this.textures.exists(key)) return; // Si ya existe, no la crees de nuevo
+    if (this.textures.exists(key)) return; 
 
     const canvas = this.textures.createCanvas(key, w, h);
     if (!canvas) return;
     const ctx = canvas.context;
-    ctx.fillStyle = col1;
-    ctx.fillRect(0, 0, w, h);
-    if (col2) {
-      ctx.fillStyle = col2;
-      ctx.fillRect(0, 0, w / 2, h / 2);
-      ctx.fillRect(w / 2, h / 2, w / 2, h / 2);
-    }
-    if (esPiso && col3) {
-      ctx.fillStyle = col3;
+
+    if (key === "ground") {
+      ctx.fillStyle = "#8D6E63"; 
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#7CB342"; 
       ctx.fillRect(0, 0, w, 12);
+      ctx.fillStyle = "#689F38"; 
+      ctx.fillRect(0, 12, w, 3);
+    } 
+    else if (key === "water") {
+      ctx.fillStyle = "#29B6F6"; 
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#03A9F4"; 
+      ctx.fillRect(0, 0, w, 8);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+      ctx.fillRect(10, 3, 10, 2);
+      ctx.fillRect(35, 3, 5, 2);
+    } 
+    else if (key === "door") {
+      ctx.fillStyle = "#5D4037"; 
+      ctx.fillRect(5, 5, 40, 75);
+      ctx.fillStyle = "#795548"; 
+      ctx.fillRect(10, 10, 30, 70);
+      ctx.fillStyle = "#D7CCC8"; 
+      ctx.fillRect(32, 45, 8, 4);
+    } 
+    else if (key === "doorOpen") {
+      ctx.fillStyle = "#5D4037"; 
+      ctx.fillRect(5, 5, 40, 75);
+      ctx.fillStyle = "#111111"; 
+      ctx.fillRect(10, 10, 30, 70);
+      ctx.fillStyle = "#222222"; 
+      ctx.fillRect(10, 60, 30, 8);
+      ctx.fillStyle = "#333333"; 
+      ctx.fillRect(10, 68, 30, 12);
+    } 
+    else if (key === "button") {
+      ctx.fillStyle = "#c0392b"; 
+      ctx.fillRect(5, 40, 40, 10);
+      ctx.fillStyle = "#e74c3c"; 
+      ctx.fillRect(10, 35, 30, 5);
     }
+    else if (key === "bridge") {
+      ctx.fillStyle = "#f39c12"; 
+      ctx.fillRect(0, 0, w, 20);
+      ctx.fillStyle = "#f1c40f"; 
+      ctx.fillRect(2, 2, w-4, 16);
+    }
+    else if (key === "cloud") { 
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(25, 25, 18, 0, Math.PI * 2);
+      ctx.arc(12, 32, 12, 0, Math.PI * 2);
+      ctx.arc(38, 32, 12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    else {
+      ctx.fillStyle = col1; ctx.fillRect(0, 0, w, h);
+    }
+    
     canvas.refresh();
   }
 
@@ -126,46 +177,24 @@ class SceneGame extends Phaser.Scene {
     canvas.refresh();
   }
 
-  crearTexturaPuerta() {
-    if (this.textures.exists("door")) return;
-    const canvas = this.textures.createCanvas("door", 50, 80);
-    const ctx = canvas.context;
-    ctx.fillStyle = "#8e44ad";
-    ctx.fillRect(0, 0, 50, 80);
-    ctx.fillStyle = "#9b59b6";
-    ctx.fillRect(5, 5, 40, 75);
-    ctx.fillStyle = "#f1c40f";
-    ctx.fillRect(35, 40, 6, 6); ctx.fillRect(22, 15, 6, 6);
-    canvas.refresh();
-  }
-
-  crearTexturaPuertaAbierta() {
-    if (this.textures.exists("doorOpen")) return;
-    const canvas = this.textures.createCanvas("doorOpen", 50, 80);
-    const ctx = canvas.context;
-    ctx.fillStyle = "#8e44ad"; 
-    ctx.fillRect(0, 0, 50, 80);
-    ctx.fillStyle = "#111111"; 
-    ctx.fillRect(5, 5, 40, 75);
-    ctx.fillStyle = "#333333"; ctx.fillRect(5, 55, 40, 10);
-    ctx.fillStyle = "#444444"; ctx.fillRect(5, 65, 40, 10);
-    canvas.refresh();
-  }
-
   create() {
     this.resetEstado();
-    this.cameras.main.setBackgroundColor("#87CEEB");
+    this.cameras.main.setBackgroundColor("#E1F5FE");
 
-    // Generar texturas solo si no existen
-    this.crearTextura("ground", "#7f8c8d", "#95a5a6", "#2ecc71", 50, 50, true);
-    this.crearTextura("water", "rgba(52, 152, 219, 0.7)", "rgba(255, 255, 255, 0.4)", null, 50, 50, false);
+    this.crearTextura("ground", null, null, null, 50, 50, false);
+    this.crearTextura("water", null, null, null, 50, 50, false);
+    this.crearTextura("door", null, null, null, 50, 80, false);
+    this.crearTextura("doorOpen", null, null, null, 50, 80, false);
+    this.crearTextura("cloud", null, null, null, 50, 50, false);
+    this.crearTextura("button", null, null, null, 50, 50, false);
+    this.crearTextura("bridge", null, null, null, 50, 50, false);
     this.crearTexturaJugador();
     this.crearTexturaLlave();
-    this.crearTexturaPuerta();
-    this.crearTexturaPuertaAbierta();
 
     this.plataformas = this.physics.add.staticGroup();
     this.agua = this.physics.add.staticGroup();
+    this.botones = this.physics.add.staticGroup();
+    this.puentes = this.physics.add.staticGroup();
     this.grupoJugadores = this.physics.add.group();
 
     const mapaActual = obtenerMapaActual();
@@ -176,7 +205,7 @@ class SceneGame extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, mapaAncho, mapaAlto);
     this.cameras.main.setBounds(0, 0, mapaAncho, mapaAlto);
 
-    this.add.text(20, 20, `NIVEL ${nivelActual}`, { fontSize: "20px", fill: "#FFF" }).setScrollFactor(0).setStroke("#000", 4);
+    this.add.text(20, 20, `NIVEL ${nivelActual}`, { fontSize: "20px", fill: "#555", fontStyle: "bold" }).setScrollFactor(0);
 
     this.txtVictoria = this.add
       .text(400, 300, "", { fontSize: "48px", fill: "#00ff88", fontStyle: "bold", align: "center", stroke: "#000", strokeThickness: 8 })
@@ -187,6 +216,7 @@ class SceneGame extends Phaser.Scene {
         const tipo = mapaActual[y][x];
         const posX = x * tamanoBloque + tamanoBloque / 2;
         const posY = y * tamanoBloque + tamanoBloque / 2;
+        
         if (tipo === 1) this.plataformas.create(posX, posY, "ground");
         else if (tipo === 2) {
           const a = this.agua.create(posX, posY, "water");
@@ -198,11 +228,24 @@ class SceneGame extends Phaser.Scene {
         } else if (tipo === 4) {
           this.puerta = this.physics.add.staticSprite(posX, posY - 15, "door").setScale(0.9);
           this.puerta.refreshBody();
+        } else if (tipo === 5) {
+          this.add.image(posX, posY, "cloud").setDepth(-10);
+        } else if (tipo === 9) { 
+          const btn = this.botones.create(posX, posY, "button");
+          btn.body.setSize(30, 15);
+          btn.body.setOffset(10, 35);
+        } else if (tipo === 10) { 
+          const pte = this.puentes.create(posX, posY - 15, "bridge");
+          pte.body.setSize(50, 20);
+          pte.body.setOffset(0, 0);
+          pte.body.enable = false;
+          pte.setAlpha(0.3);
         }
       }
     }
 
     this.physics.add.collider(this.grupoJugadores, this.plataformas);
+    this.physics.add.collider(this.grupoJugadores, this.puentes);
     this.physics.add.collider(this.grupoJugadores, this.grupoJugadores);
     this.physics.add.overlap(this.grupoJugadores, this.agua, this.respawnEquipo, null, this);
 
@@ -224,11 +267,11 @@ class SceneGame extends Phaser.Scene {
     socket.off("nuevoJugador").on("nuevoJugador", ({ idDelSocket, color }) => {
       if (this.jugadoresSprites[idDelSocket]) return;
       const cant = Object.keys(this.jugadoresSprites).length;
-      const player = this.grupoJugadores.create(100 + cant * 60, 250, "player");
+      
+      const player = this.grupoJugadores.create(100 + cant * 30, 250, "player");
       player.setData("id", idDelSocket);
       player.setTint(color).setCollideWorldBounds(true).setScale(0.9);
       
-      // Hitbox normal como pediste
       player.body.setSize(40, 40);
       player.body.setOffset(0, 0);
 
@@ -283,27 +326,24 @@ class SceneGame extends Phaser.Scene {
     lSprite.setVisible(false).body.enable = false;
   }
 
-  // LOGICA "CLEAN SCREEN" ESTILO TIC-80
   victoria() {
     if (this.nivelSuperado) return;
     this.nivelSuperado = true;
 
-    // 1. Limpiar pantalla (Borrar mapa visualmente)
     this.plataformas.clear(true, true);
     this.agua.clear(true, true);
+    this.botones.clear(true, true);
+    this.puentes.clear(true, true);
     if (this.llave) this.llave.destroy();
     if (this.puerta) this.puerta.destroy();
 
-    // 2. Mostrar mensaje de felicitaciones
     const msj = nivelActual < CONFIG.TOTAL_NIVELES ? `¡NIVEL ${nivelActual} COMPLETADO!\nSiguiente nivel...` : `¡JUEGO COMPLETADO! 🎉`;
     this.txtVictoria.setText(msj).setVisible(true);
 
-    // 3. Esperar 2.5 segundos (TIC-80 style)
     this.time.delayedCall(CONFIG.TIEMPO_VICTORIA, () => {
       if (nivelActual < CONFIG.TOTAL_NIVELES) nivelActual++;
       else nivelActual = 1;
-      
-      this.scene.restart(); // 4. Renderizar mapa nuevo
+      this.scene.restart(); 
     });
   }
 
@@ -313,7 +353,6 @@ class SceneGame extends Phaser.Scene {
     const totalJugadores = jugadores.length;
     if (totalJugadores === 0) return;
 
-    // Cámara
     const afuera = jugadores.filter(([, j]) => !j.adentro);
     if (afuera.length > 0) {
       const sumaX = afuera.reduce((s, [, j]) => s + j.sprite.x, 0);
@@ -322,11 +361,39 @@ class SceneGame extends Phaser.Scene {
       this.cameras.main.scrollX += (targetX - this.cameras.main.scrollX) * 0.12;
     }
 
-    // Llave
     if (this.equipoTieneLlave && this.llave && this.llave.visible && !this.puertaAbierta) {
       const portador = this.jugadoresSprites[this.jugadorConLlaveId];
       if (portador && !portador.adentro) this.llave.setPosition(portador.sprite.x, portador.sprite.y - 35);
     }
+
+    let algunBotonPisado = false;
+    
+    this.botones.getChildren().forEach(btn => {
+      let pisado = false;
+      for (const [id, j] of jugadores) {
+        if (!j.adentro && Phaser.Geom.Intersects.RectangleToRectangle(j.sprite.getBounds(), btn.getBounds())) {
+          pisado = true;
+          break;
+        }
+      }
+      
+      if (pisado) {
+        btn.setTint(0xaaaaaa); 
+        algunBotonPisado = true;
+      } else {
+        btn.clearTint();
+      }
+    });
+
+    this.puentes.getChildren().forEach(pte => {
+      if (algunBotonPisado) {
+        pte.body.enable = true;
+        pte.setAlpha(1);
+      } else {
+        pte.body.enable = false;
+        pte.setAlpha(0.3);
+      }
+    });
 
     for (const [id, j] of jugadores) {
       const p = j.sprite;
@@ -346,7 +413,6 @@ class SceneGame extends Phaser.Scene {
 
       if (j.controles.jump && p.body.blocked.down) { p.setVelocityY(-CONFIG.SALTO_FUERZA); j.controles.jump = false; }
 
-      // Puerta Matematica
       if (this.puerta) {
         const dist = Math.abs(p.x - this.puerta.x) < 40 && Math.abs(p.y - this.puerta.y) < 60;
         if (dist) {
@@ -372,7 +438,7 @@ class SceneGame extends Phaser.Scene {
 
 const config = {
   type: Phaser.AUTO, width: 800, height: 600, parent: "juego",
-  physics: { default: "arcade", arcade: { gravity: { y: CONFIG.GRAVEDAD }, debug: false, fps: 120, overlapBias: 16 } },
+  physics: { default: "arcade", arcade: { gravity: { y: CONFIG.GRAVEDAD }, debug: false, fps: 120, overlapBias: 16, separationBias: 10 } },
   scene: [SceneGame],
 };
 new Phaser.Game(config);
